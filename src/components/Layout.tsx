@@ -1,6 +1,7 @@
 import React from 'react';
 import { LogOut, Trash2, User } from 'lucide-react';
 import { clearAuthState } from '../utils/storage';
+import NotificationBell from './NotificationBell';
 
 interface LayoutProps {
   user: any;
@@ -38,6 +39,9 @@ export default function Layout({ user, children, onLogout }: LayoutProps) {
                 <User className="w-4 h-4" />
                 <span>{user?.name || 'Usuario'}</span>
               </div>
+              
+              {user?.role === 'admin' && <NotificationBell />}
+              
               <button
                 onClick={handleLogout}
                 className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"

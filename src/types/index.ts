@@ -24,6 +24,16 @@ export interface EmailConfig {
   active: boolean;
 }
 
+export interface OperatorMessage {
+  id: string;
+  operatorId: string;
+  operatorName: string;
+  message: string;
+  recordId?: string;
+  timestamp: string;
+  read: boolean;
+}
+
 export interface ReportFilter {
   startDate: string;
   endDate: string;

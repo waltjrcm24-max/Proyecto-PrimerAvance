@@ -1,4 +1,5 @@
 import { User, WasteRecord, EmailConfig } from '../types';
+import { OperatorMessage } from '../types';
 
 // Default admin user
 const DEFAULT_USER: User = {
@@ -22,6 +23,7 @@ const USERS_KEY = 'waste_management_users';
 const WASTE_RECORDS_KEY = 'waste_management_records';
 const EMAIL_CONFIG_KEY = 'waste_management_emails';
 const AUTH_KEY = 'waste_management_auth';
+const OPERATOR_MESSAGES_KEY = 'waste_management_operator_messages';
 
 // Initialize default data
 export const initializeStorage = () => {
@@ -37,6 +39,10 @@ export const initializeStorage = () => {
   
   if (!localStorage.getItem(EMAIL_CONFIG_KEY)) {
     localStorage.setItem(EMAIL_CONFIG_KEY, JSON.stringify([]));
+  }
+  
+  if (!localStorage.getItem(OPERATOR_MESSAGES_KEY)) {
+    localStorage.setItem(OPERATOR_MESSAGES_KEY, JSON.stringify([]));
   }
 };
 
@@ -121,4 +127,35 @@ export const getAuthState = (): { isAuthenticated: boolean; user: User | null } 
 
 export const clearAuthState = () => {
   localStorage.removeItem(AUTH_KEY);
+};
+
+// Operator Messages
+export const getOperatorMessages = (): OperatorMessage[] => {
+  const messages = localStorage.getItem(OPERATOR_MESSAGES_KEY);
+  return messages ? JSON.parse(messages) : [];
+};
+
+export const addOperatorMessage = (message: Omit<OperatorMessage, 'id' | 'timestamp'>): OperatorMessage => {
+  const messages = getOperatorMessages();
+  const newMessage: OperatorMessage = {
+    ...message,
+    id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
+    timestamp: new Date().toISOString(),
+    read: false
+  };
+  
+  messages.push(newMessage);
+  localStorage.setItem(OPERATOR_MESSAGES_KEY, JSON.stringify(messages));
+  return newMessage;
+};
+
+export const markMessageAsRead = (id: string): void => {
+  const messages = getOperatorMessages().map(message => 
+    message.id === id ? { ...message, read: true } : message
+  );
+  localStorage.setItem(OPERATOR_MESSAGES_KEY, JSON.stringify(messages));
+};
+
+export const getUnreadMessagesCount = (): number => {
+  return getOperatorMessages().filter(message => !message.read).length;
 };

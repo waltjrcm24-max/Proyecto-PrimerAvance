@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { Save, CheckCircle, Clock, MapPin, Scale, FileText, X } from 'lucide-react';
+import { Save, CheckCircle, Clock, MapPin, Scale, FileText, X, MessageSquare, Send } from 'lucide-react';
 import { addWasteRecord } from '../utils/storage';
+import { addOperatorMessage } from '../utils/storage';
 import { WasteRecord } from '../types';
 
 interface TabletWasteFormProps {
@@ -18,7 +19,7 @@ const WASTE_TYPES = [
   {
     id: 'organicos',
     name: 'Orgánicos',
-    icon: '🥬',
+    icon: '🍖',
     color: 'from-green-500 to-emerald-600',
     bgColor: 'bg-green-50',
     borderColor: 'border-green-200'
@@ -42,7 +43,7 @@ const WASTE_TYPES = [
   {
     id: 'pet',
     name: 'Pet',
-    icon: '♻️',
+    icon: '🍼',
     color: 'from-blue-500 to-cyan-600',
     bgColor: 'bg-blue-50',
     borderColor: 'border-blue-200'
@@ -58,10 +59,18 @@ const WASTE_TYPES = [
   {
     id: 'emplaye',
     name: 'Emplaye',
-    icon: '📦',
+    icon: '🛍️',
     color: 'from-pink-500 to-rose-600',
     bgColor: 'bg-pink-50',
     borderColor: 'border-pink-200'
+  },
+  {
+    id: 'bopp',
+    name: 'BOPP (envolturas)',
+    icon: '📄',
+    color: 'from-cyan-500 to-blue-600',
+    bgColor: 'bg-cyan-50',
+    borderColor: 'border-cyan-200'
   },
   {
     id: 'vidrio',
@@ -74,7 +83,7 @@ const WASTE_TYPES = [
   {
     id: 'aluminio',
     name: 'Aluminio',
-    icon: '🥤',
+    icon: '🥫',
     color: 'from-slate-500 to-gray-600',
     bgColor: 'bg-slate-50',
     borderColor: 'border-slate-200'
@@ -89,7 +98,7 @@ const WASTE_TYPES = [
   },
   {
     id: 'papel',
-    name: 'Papel',
+    name: 'Papel, libros, revistas y periódicos',
     icon: '📄',
     color: 'from-yellow-500 to-amber-600',
     bgColor: 'bg-yellow-50',
@@ -186,6 +195,9 @@ export default function TabletWasteForm({ user, onRecordAdded }: TabletWasteForm
   const [time, setTime] = useState(new Date().toTimeString().split(' ')[0].substring(0, 5));
   const [loading, setLoading] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [showMessageForm, setShowMessageForm] = useState(false);
+  const [messageText, setMessageText] = useState('');
+  const [lastRecordId, setLastRecordId] = useState<string | null>(null);
 
   const handleWasteTypeToggle = (wasteType: typeof WASTE_TYPES[0]) => {
     const isSelected = selectedWastes.some(w => w.type === wasteType.name);
@@ -237,6 +249,7 @@ export default function TabletWasteForm({ user, onRecordAdded }: TabletWasteForm
           createdBy: user.id
         });
         onRecordAdded(record);
+        setLastRecordId(record.id);
       }
       
       // Show success message
@@ -253,6 +266,33 @@ export default function TabletWasteForm({ user, onRecordAdded }: TabletWasteForm
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleSendMessage = () => {
+    if (!messageText.trim()) return;
+
+    addOperatorMessage({
+      operatorId: user.id,
+      operatorName: user.name,
+      message: messageText.trim(),
+      recordId: lastRecordId || undefined,
+      read: false
+    });
+
+    setMessageText('');
+    setShowMessageForm(false);
+    
+    // Show success notification
+    const successDiv = document.createElement('div');
+    successDiv.className = 'fixed top-4 right-4 bg-blue-500 text-white px-6 py-4 rounded-xl shadow-lg flex items-center gap-3 z-50';
+    successDiv.innerHTML = `
+      <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+      </svg>
+      <span class="font-medium">Mensaje enviado correctamente</span>
+    `;
+    document.body.appendChild(successDiv);
+    setTimeout(() => document.body.removeChild(successDiv), 3000);
   };
 
   const canSubmit = selectedWastes.length > 0 && selectedArea && 
@@ -476,7 +516,7 @@ export default function TabletWasteForm({ user, onRecordAdded }: TabletWasteForm
 
           {/* Submit Button */}
           {selectedWastes.length > 0 && (
-            <div className="text-center">
+            <div className="text-center space-y-4">
               <button
                 type="submit"
                 disabled={!canSubmit}
@@ -498,6 +538,57 @@ export default function TabletWasteForm({ user, onRecordAdded }: TabletWasteForm
                   </div>
                 )}
               </button>
+              
+              {/* Message Button */}
+              <div className="flex justify-center gap-4">
+                <button
+                  type="button"
+                  onClick={() => setShowMessageForm(!showMessageForm)}
+                  className="bg-gradient-to-r from-blue-600 to-cyan-600 text-white px-6 py-3 rounded-xl hover:from-blue-700 hover:to-cyan-700 transition-all duration-200 flex items-center gap-2 font-medium"
+                >
+                  <MessageSquare className="w-5 h-5" />
+                  Enviar Mensaje
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Message Form */}
+          {showMessageForm && (
+            <div className="bg-white rounded-2xl shadow-lg p-6 animate-fadeIn">
+              <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+                <MessageSquare className="w-6 h-6 text-blue-600" />
+                Enviar mensaje al administrador
+              </h3>
+              
+              <div className="space-y-4">
+                <textarea
+                  value={messageText}
+                  onChange={(e) => setMessageText(e.target.value)}
+                  placeholder="Escribe tu mensaje aquí (reportar errores, problemas, observaciones, etc.)"
+                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-4 focus:ring-blue-200 focus:border-blue-500 transition-all resize-none"
+                  rows={4}
+                />
+                
+                <div className="flex gap-3 justify-end">
+                  <button
+                    type="button"
+                    onClick={() => setShowMessageForm(false)}
+                    className="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleSendMessage}
+                    disabled={!messageText.trim()}
+                    className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <Send className="w-4 h-4" />
+                    Enviar
+                  </button>
+                </div>
+              </div>
             </div>
           )}
         </form>

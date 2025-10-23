@@ -1,4 +1,5 @@
 import React from 'react';
+import { useState } from 'react';
 import { Bar, Pie, Line } from 'react-chartjs-2';
 import {
   Chart as ChartJS,
@@ -12,7 +13,7 @@ import {
   PointElement,
   LineElement,
 } from 'chart.js';
-import { BarChart3, PieChart, TrendingUp } from 'lucide-react';
+import { BarChart3, PieChart, TrendingUp, Filter, X } from 'lucide-react';
 import { WasteRecord } from '../types';
 
 ChartJS.register(
@@ -32,22 +33,66 @@ interface DashboardProps {
 }
 
 export default function Dashboard({ records }: DashboardProps) {
+  const [showFilters, setShowFilters] = useState(false);
+  const [filters, setFilters] = useState({
+    type: '',
+    location: '',
+    startDate: '',
+    endDate: '',
+    minWeight: '',
+    maxWeight: '',
+    startTime: '',
+    endTime: ''
+  });
+
+  // Apply filters to records
+  const filteredRecords = records.filter(record => {
+    if (filters.type && record.type !== filters.type) return false;
+    if (filters.location && record.location !== filters.location) return false;
+    if (filters.startDate && record.date < filters.startDate) return false;
+    if (filters.endDate && record.date > filters.endDate) return false;
+    if (filters.minWeight && record.weight < parseFloat(filters.minWeight)) return false;
+    if (filters.maxWeight && record.weight > parseFloat(filters.maxWeight)) return false;
+    if (filters.startTime && record.time < filters.startTime) return false;
+    if (filters.endTime && record.time > filters.endTime) return false;
+    return true;
+  });
+
+  const clearFilters = () => {
+    setFilters({
+      type: '',
+      location: '',
+      startDate: '',
+      endDate: '',
+      minWeight: '',
+      maxWeight: '',
+      startTime: '',
+      endTime: ''
+    });
+  };
+
+  const hasActiveFilters = Object.values(filters).some(value => value !== '');
+
   // Process data for charts
-  const wasteByType = records.reduce((acc, record) => {
+  const wasteByType = filteredRecords.reduce((acc, record) => {
     acc[record.type] = (acc[record.type] || 0) + record.weight;
     return acc;
   }, {} as Record<string, number>);
 
-  const wasteByLocation = records.reduce((acc, record) => {
+  const wasteByLocation = filteredRecords.reduce((acc, record) => {
     acc[record.location] = (acc[record.location] || 0) + record.weight;
     return acc;
   }, {} as Record<string, number>);
 
-  const wasteByDate = records.reduce((acc, record) => {
+  const wasteByDate = filteredRecords.reduce((acc, record) => {
     const date = record.date;
     acc[date] = (acc[date] || 0) + record.weight;
     return acc;
   }, {} as Record<string, number>);
+
+  // Get unique values for filter options
+  const wasteTypes = Array.from(new Set(records.map(record => record.type)));
+  const locations = Array.from(new Set(records.map(record => record.location)));
 
   // Chart colors
   const colors = [
@@ -152,16 +197,171 @@ export default function Dashboard({ records }: DashboardProps) {
             <BarChart3 className="w-5 h-5 text-blue-600" />
           </div>
           <h2 className="text-xl font-semibold text-gray-900">Dashboard de Residuos</h2>
+          
+          <div className="ml-auto flex gap-2">
+            <button
+              onClick={() => setShowFilters(!showFilters)}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
+                showFilters || hasActiveFilters
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              <Filter className="w-4 h-4" />
+              Filtros
+              {hasActiveFilters && (
+                <span className="bg-white text-blue-600 text-xs px-2 py-1 rounded-full font-medium">
+                  Activos
+                </span>
+              )}
+            </button>
+            
+            {hasActiveFilters && (
+              <button
+                onClick={clearFilters}
+                className="flex items-center gap-2 px-3 py-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+              >
+                <X className="w-4 h-4" />
+                Limpiar
+              </button>
+            )}
+          </div>
         </div>
 
-        {records.length === 0 ? (
+        {/* Filters Panel */}
+        {showFilters && (
+          <div className="bg-gray-50 rounded-lg p-4 mb-6">
+            <h3 className="text-lg font-medium text-gray-900 mb-4">Filtros Interactivos</h3>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Tipo de Residuo:
+                </label>
+                <select
+                  value={filters.type}
+                  onChange={(e) => setFilters(prev => ({ ...prev, type: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                >
+                  <option value="">Todos los tipos</option>
+                  {wasteTypes.map(type => (
+                    <option key={type} value={type}>{type}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Ubicación:
+                </label>
+                <select
+                  value={filters.location}
+                  onChange={(e) => setFilters(prev => ({ ...prev, location: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                >
+                  <option value="">Todas las ubicaciones</option>
+                  {locations.map(location => (
+                    <option key={location} value={location}>{location}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Fecha Inicio:
+                </label>
+                <input
+                  type="date"
+                  value={filters.startDate}
+                  onChange={(e) => setFilters(prev => ({ ...prev, startDate: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Fecha Fin:
+                </label>
+                <input
+                  type="date"
+                  value={filters.endDate}
+                  onChange={(e) => setFilters(prev => ({ ...prev, endDate: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Peso Mínimo (kg):
+                </label>
+                <input
+                  type="number"
+                  step="0.1"
+                  value={filters.minWeight}
+                  onChange={(e) => setFilters(prev => ({ ...prev, minWeight: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="0.0"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Peso Máximo (kg):
+                </label>
+                <input
+                  type="number"
+                  step="0.1"
+                  value={filters.maxWeight}
+                  onChange={(e) => setFilters(prev => ({ ...prev, maxWeight: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="0.0"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Hora Inicio:
+                </label>
+                <input
+                  type="time"
+                  value={filters.startTime}
+                  onChange={(e) => setFilters(prev => ({ ...prev, startTime: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Hora Fin:
+                </label>
+                <input
+                  type="time"
+                  value={filters.endTime}
+                  onChange={(e) => setFilters(prev => ({ ...prev, endTime: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+            </div>
+            
+            <div className="mt-4 text-sm text-gray-600">
+              Mostrando {filteredRecords.length} de {records.length} registros
+            </div>
+          </div>
+        )}
+
+        {filteredRecords.length === 0 ? (
           <div className="text-center py-12">
             <div className="bg-gray-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
               <BarChart3 className="w-8 h-8 text-gray-400" />
             </div>
-            <p className="text-gray-500 mb-2">No hay datos registrados</p>
+            <p className="text-gray-500 mb-2">
+              {records.length === 0 ? 'No hay datos registrados' : 'No hay registros que coincidan con los filtros'}
+            </p>
             <p className="text-sm text-gray-400">
-              Los gráficos aparecerán cuando registres residuos
+              {records.length === 0 
+                ? 'Los gráficos aparecerán cuando registres residuos'
+                : 'Ajusta los filtros para ver más resultados'
+              }
             </p>
           </div>
         ) : (
@@ -214,9 +414,11 @@ export default function Dashboard({ records }: DashboardProps) {
       </div>
 
       {/* Recent Records Table */}
-      {records.length > 0 && (
+      {filteredRecords.length > 0 && (
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mt-6">
-          <h3 className="text-lg font-medium text-gray-900 mb-4">Registros Recientes</h3>
+          <h3 className="text-lg font-medium text-gray-900 mb-4">
+            {hasActiveFilters ? 'Registros Filtrados' : 'Registros Recientes'}
+          </h3>
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
@@ -229,7 +431,7 @@ export default function Dashboard({ records }: DashboardProps) {
                 </tr>
               </thead>
               <tbody>
-                {records.slice(-10).reverse().map((record) => (
+                {(hasActiveFilters ? filteredRecords : filteredRecords.slice(-10)).reverse().map((record) => (
                   <tr key={record.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
                     <td className="py-3 px-4">
                       <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">

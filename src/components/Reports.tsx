@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { FileText, Download, Calendar, Trash2, Mail, Filter, Send } from 'lucide-react';
+import { FileText, Download, Calendar, Trash2, Mail, Filter, Send, FileSpreadsheet } from 'lucide-react';
 import { WasteRecord } from '../types';
 import { deleteWasteRecord, getEmailConfigs, addEmailConfig, deleteEmailConfig } from '../utils/storage';
 
@@ -21,6 +21,8 @@ export default function Reports({ records, onRecordDeleted }: ReportsProps) {
   const [newEmail, setNewEmail] = useState('');
   const [newEmailName, setNewEmailName] = useState('');
   const [emailConfigs, setEmailConfigs] = useState(getEmailConfigs());
+
+  const [downloadFormat, setDownloadFormat] = useState<'json' | 'csv' | 'pdf'>('csv');
 
   // Get date range based on period
   const getDateRange = () => {
@@ -114,7 +116,61 @@ export default function Reports({ records, onRecordDeleted }: ReportsProps) {
     alert(`Reporte enviado a ${activeEmails.length} destinatario(s): ${activeEmails.map(e => e.email).join(', ')}`);
   };
 
-  const generateReport = () => {
+  const generateCSVReport = () => {
+    const periodText = {
+      daily: 'Diario',
+      weekly: 'Semanal',
+      monthly: 'Mensual',
+      custom: 'Personalizado'
+    };
+
+    // CSV Headers
+    const headers = [
+      'Tipo de Residuo',
+      'Ubicación',
+      'Peso (kg)',
+      'Fecha',
+      'Hora',
+      'Notas',
+      'Creado por'
+    ];
+
+    // CSV Data
+    const csvData = filteredRecords.map(record => [
+      record.type,
+      record.location,
+      record.weight.toString(),
+      new Date(record.date).toLocaleDateString('es-MX'),
+      record.time,
+      record.notes || '',
+      record.createdBy
+    ]);
+
+    // Create CSV content
+    const csvContent = [
+      [`Reporte ${periodText[reportPeriod]} de Residuos Sólidos`],
+      [`Hotel: Secrets Playa Blanca Costa Mujeres`],
+      [`Fecha de generación: ${new Date().toLocaleString('es-MX')}`],
+      [`Período: ${dateStart.toLocaleDateString('es-MX')} - ${dateEnd.toLocaleDateString('es-MX')}`],
+      [`Total de registros: ${filteredRecords.length}`],
+      [`Peso total: ${totalWeight.toFixed(2)} kg`],
+      [],
+      headers,
+      ...csvData
+    ].map(row => row.join(',')).join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `reporte-${reportPeriod}-${dateStart.toISOString().split('T')[0]}-${dateEnd.toISOString().split('T')[0]}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  const generateJSONReport = () => {
     const periodText = {
       daily: 'Diario',
       weekly: 'Semanal',
@@ -155,6 +211,115 @@ export default function Reports({ records, onRecordDeleted }: ReportsProps) {
     URL.revokeObjectURL(url);
   };
 
+  const generatePDFReport = () => {
+    // For PDF generation, we'll create an HTML version that can be printed as PDF
+    const periodText = {
+      daily: 'Diario',
+      weekly: 'Semanal',
+      monthly: 'Mensual',
+      custom: 'Personalizado'
+    };
+
+    const htmlContent = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <title>Reporte de Residuos Sólidos</title>
+        <style>
+          body { font-family: Arial, sans-serif; margin: 20px; }
+          .header { text-align: center; margin-bottom: 30px; }
+          .stats { display: flex; justify-content: space-around; margin: 20px 0; }
+          .stat { text-align: center; }
+          table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+          th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+          th { background-color: #f2f2f2; }
+          .footer { margin-top: 30px; text-align: center; font-size: 12px; color: #666; }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <h1>Reporte ${periodText[reportPeriod]} de Residuos Sólidos</h1>
+          <h2>Secrets Playa Blanca Costa Mujeres</h2>
+          <p>Fecha de generación: ${new Date().toLocaleString('es-MX')}</p>
+          <p>Período: ${dateStart.toLocaleDateString('es-MX')} - ${dateEnd.toLocaleDateString('es-MX')}</p>
+        </div>
+        
+        <div class="stats">
+          <div class="stat">
+            <h3>${filteredRecords.length}</h3>
+            <p>Total Registros</p>
+          </div>
+          <div class="stat">
+            <h3>${totalWeight.toFixed(2)} kg</h3>
+            <p>Peso Total</p>
+          </div>
+          <div class="stat">
+            <h3>${averageWeight.toFixed(2)} kg</h3>
+            <p>Peso Promedio</p>
+          </div>
+        </div>
+        
+        <table>
+          <thead>
+            <tr>
+              <th>Tipo</th>
+              <th>Ubicación</th>
+              <th>Peso (kg)</th>
+              <th>Fecha</th>
+              <th>Hora</th>
+              <th>Notas</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${filteredRecords.map(record => `
+              <tr>
+                <td>${record.type}</td>
+                <td>${record.location}</td>
+                <td>${record.weight.toFixed(1)}</td>
+                <td>${new Date(record.date).toLocaleDateString('es-MX')}</td>
+                <td>${record.time}</td>
+                <td>${record.notes || '-'}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+        
+        <div class="footer">
+          <p>Generado automáticamente por el Sistema de Gestión de Residuos Sólidos</p>
+        </div>
+      </body>
+      </html>
+    `;
+
+    const blob = new Blob([htmlContent], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    const newWindow = window.open(url, '_blank');
+    
+    if (newWindow) {
+      newWindow.onload = () => {
+        setTimeout(() => {
+          newWindow.print();
+          URL.revokeObjectURL(url);
+        }, 500);
+      };
+    }
+  };
+
+  const handleDownload = () => {
+    switch (downloadFormat) {
+      case 'csv':
+        generateCSVReport();
+        break;
+      case 'json':
+        generateJSONReport();
+        break;
+      case 'pdf':
+        generatePDFReport();
+        break;
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
@@ -167,6 +332,17 @@ export default function Reports({ records, onRecordDeleted }: ReportsProps) {
           </div>
           
           <div className="flex gap-2">
+            <div className="flex items-center gap-2">
+              <select
+                value={downloadFormat}
+                onChange={(e) => setDownloadFormat(e.target.value as any)}
+                className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm"
+              >
+                <option value="csv">Excel/CSV</option>
+                <option value="json">JSON</option>
+                <option value="pdf">PDF</option>
+              </select>
+            </div>
             <button
               onClick={() => setShowEmailConfig(!showEmailConfig)}
               className="bg-gradient-to-r from-blue-600 to-cyan-600 text-white px-4 py-2 rounded-lg hover:from-blue-700 hover:to-cyan-700 focus:ring-4 focus:ring-blue-200 transition-all duration-200 flex items-center gap-2 font-medium"
@@ -182,10 +358,14 @@ export default function Reports({ records, onRecordDeleted }: ReportsProps) {
               Enviar
             </button>
             <button
-              onClick={generateReport}
+              onClick={handleDownload}
               className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-4 py-2 rounded-lg hover:from-purple-700 hover:to-indigo-700 focus:ring-4 focus:ring-purple-200 transition-all duration-200 flex items-center gap-2 font-medium"
             >
-              <Download className="w-4 h-4" />
+              {downloadFormat === 'csv' ? (
+                <FileSpreadsheet className="w-4 h-4" />
+              ) : (
+                <Download className="w-4 h-4" />
+              )}
               Descargar
             </button>
           </div>

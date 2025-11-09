@@ -69,7 +69,6 @@ function App() {
       name: 'Reportes',
       icon: FileText,
       color: 'text-purple-600 bg-purple-100'
-    }
     },
     {
       id: 'configuration' as const,

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Settings, Users, Mail, Key, Image, Plus, Trash2, Edit2, Save, X } from 'lucide-react';
+import { Settings, Users, Mail, Key, Image, Plus, Trash2, CreditCard as Edit2, Save, X } from 'lucide-react';
 import { getUsers, getEmailConfigs, addEmailConfig, deleteEmailConfig } from '../utils/storage';
 import { User, EmailConfig } from '../types';
 

@@ -1,15 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, BarChart3, FileText } from 'lucide-react';
+import { Plus, BarChart3, FileText, Settings } from 'lucide-react';
 import Login from './components/Login';
 import Layout from './components/Layout';
 import WasteForm from './components/WasteForm';
 import TabletWasteForm from './components/TabletWasteForm';
 import Dashboard from './components/Dashboard';
 import Reports from './components/Reports';
+import Configuration from './components/Configuration';
 import { initializeStorage, getAuthState, getWasteRecords } from './utils/storage';
 import { WasteRecord } from './types';
 
-type ActiveTab = 'capture' | 'dashboard' | 'reports';
+type ActiveTab = 'capture' | 'dashboard' | 'reports' | 'configuration';
 
 function App() {
   const [authState, setAuthState] = useState(getAuthState());
@@ -69,6 +70,13 @@ function App() {
       icon: FileText,
       color: 'text-purple-600 bg-purple-100'
     }
+    },
+    {
+      id: 'configuration' as const,
+      name: 'Configuración',
+      icon: Settings,
+      color: 'text-gray-600 bg-gray-100'
+    }
   ];
 
   return (
@@ -118,6 +126,9 @@ function App() {
         )}
         {activeTab === 'reports' && (
           <Reports records={records} onRecordDeleted={handleRecordDeleted} />
+        )}
+        {activeTab === 'configuration' && (
+          <Configuration />
         )}
       </div>
     </Layout>

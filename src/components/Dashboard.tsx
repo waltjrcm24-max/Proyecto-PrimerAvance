@@ -365,48 +365,51 @@ export default function Dashboard({ records }: DashboardProps) {
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="space-y-6">
             {/* Bar Chart */}
-            <div className="bg-gray-50 rounded-lg p-4">
+            <div className="bg-gray-50 rounded-lg p-4 w-full">
               <h3 className="text-lg font-medium text-gray-900 mb-4 flex items-center gap-2">
                 <BarChart3 className="w-5 h-5 text-blue-600" />
                 Residuos por Tipo
               </h3>
-              <div className="h-64">
+              <div className="h-80">
                 <Bar data={barData} options={chartOptions} />
               </div>
             </div>
 
             {/* Location Chart */}
-            <div className="bg-gray-50 rounded-lg p-4">
+            <div className="bg-gray-50 rounded-lg p-4 w-full">
               <h3 className="text-lg font-medium text-gray-900 mb-4 flex items-center gap-2">
                 <BarChart3 className="w-5 h-5 text-orange-600" />
                 Residuos por Ubicación
               </h3>
-              <div className="h-64">
+              <div className="h-80">
                 <Bar data={locationData} options={chartOptions} />
               </div>
             </div>
 
-            {/* Pie Chart */}
-            <div className="bg-gray-50 rounded-lg p-4 lg:col-span-1">
-              <h3 className="text-lg font-medium text-gray-900 mb-4 flex items-center gap-2">
-                <PieChart className="w-5 h-5 text-green-600" />
-                Distribución
-              </h3>
-              <div className="h-64">
-                <Pie data={pieData} options={pieOptions} />
+            {/* Bottom Charts Row */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Pie Chart */}
+              <div className="bg-gray-50 rounded-lg p-4">
+                <h3 className="text-lg font-medium text-gray-900 mb-4 flex items-center gap-2">
+                  <PieChart className="w-5 h-5 text-green-600" />
+                  Distribución
+                </h3>
+                <div className="h-64">
+                  <Pie data={pieData} options={pieOptions} />
+                </div>
               </div>
-            </div>
 
-            {/* Line Chart */}
-            <div className="bg-gray-50 rounded-lg p-4 lg:col-span-1">
-              <h3 className="text-lg font-medium text-gray-900 mb-4 flex items-center gap-2">
-                <TrendingUp className="w-5 h-5 text-purple-600" />
-                Tendencia Temporal
-              </h3>
-              <div className="h-64">
-                <Line data={lineData} options={chartOptions} />
+              {/* Line Chart */}
+              <div className="bg-gray-50 rounded-lg p-4">
+                <h3 className="text-lg font-medium text-gray-900 mb-4 flex items-center gap-2">
+                  <TrendingUp className="w-5 h-5 text-purple-600" />
+                  Tendencia Temporal
+                </h3>
+                <div className="h-64">
+                  <Line data={lineData} options={chartOptions} />
+                </div>
               </div>
             </div>
           </div>

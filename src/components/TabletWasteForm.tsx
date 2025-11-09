@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Save, CheckCircle, Clock, MapPin, Scale, FileText, X, MessageSquare, Send } from 'lucide-react';
+import { Save, CheckCircle, Clock, MapPin, Scale, FileText, X, MessageSquare, Send, ArrowDown, Info } from 'lucide-react';
 import { addWasteRecord } from '../utils/storage';
 import { addOperatorMessage } from '../utils/storage';
 import { WasteRecord } from '../types';
@@ -301,6 +301,18 @@ export default function TabletWasteForm({ user, onRecordAdded }: TabletWasteForm
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 via-blue-50 to-teal-50 p-4">
       <div className="max-w-6xl mx-auto">
+        {/* Fixed Message Button */}
+        <div className="fixed bottom-6 right-6 z-50">
+          <button
+            type="button"
+            onClick={() => setShowMessageForm(!showMessageForm)}
+            className="bg-gradient-to-r from-blue-600 to-cyan-600 text-white p-4 rounded-full shadow-xl hover:from-blue-700 hover:to-cyan-700 transition-all duration-200 hover:scale-110"
+            title="Enviar mensaje al administrador"
+          >
+            <MessageSquare className="w-6 h-6" />
+          </button>
+        </div>
+
         {/* Header */}
         <div className="text-center mb-8">
           <div className="bg-white rounded-2xl shadow-lg p-6 mb-6">
@@ -312,6 +324,24 @@ export default function TabletWasteForm({ user, onRecordAdded }: TabletWasteForm
             </p>
           </div>
         </div>
+
+        {/* Visual Guide */}
+        {selectedWastes.length > 0 && (
+          <div className="bg-blue-100 border-l-4 border-blue-500 p-4 mb-6 rounded-lg animate-pulse">
+            <div className="flex items-center gap-3">
+              <Info className="w-6 h-6 text-blue-600" />
+              <div>
+                <p className="text-blue-800 font-medium">
+                  ¡Perfecto! Has seleccionado {selectedWastes.length} tipo{selectedWastes.length > 1 ? 's' : ''} de residuo{selectedWastes.length > 1 ? 's' : ''}
+                </p>
+                <p className="text-blue-700 text-sm flex items-center gap-2">
+                  Ahora desplázate hacia abajo para ingresar los pesos
+                  <ArrowDown className="w-4 h-4 animate-bounce" />
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Success Message */}
         {showSuccess && (
@@ -514,9 +544,9 @@ export default function TabletWasteForm({ user, onRecordAdded }: TabletWasteForm
             </div>
           )}
 
-          {/* Submit Button */}
+          {/* Submit Button and Actions */}
           {selectedWastes.length > 0 && (
-            <div className="text-center space-y-4">
+            <div className="text-center">
               <button
                 type="submit"
                 disabled={!canSubmit}
@@ -538,24 +568,14 @@ export default function TabletWasteForm({ user, onRecordAdded }: TabletWasteForm
                   </div>
                 )}
               </button>
-              
-              {/* Message Button */}
-              <div className="flex justify-center gap-4">
-                <button
-                  type="button"
-                  onClick={() => setShowMessageForm(!showMessageForm)}
-                  className="bg-gradient-to-r from-blue-600 to-cyan-600 text-white px-6 py-3 rounded-xl hover:from-blue-700 hover:to-cyan-700 transition-all duration-200 flex items-center gap-2 font-medium"
-                >
-                  <MessageSquare className="w-5 h-5" />
-                  Enviar Mensaje
-                </button>
-              </div>
             </div>
           )}
+        </form>
 
-          {/* Message Form */}
-          {showMessageForm && (
-            <div className="bg-white rounded-2xl shadow-lg p-6 animate-fadeIn">
+        {/* Message Form - Fixed Position */}
+        {showMessageForm && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-md animate-fadeIn">
               <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
                 <MessageSquare className="w-6 h-6 text-blue-600" />
                 Enviar mensaje al administrador
@@ -590,8 +610,8 @@ export default function TabletWasteForm({ user, onRecordAdded }: TabletWasteForm
                 </div>
               </div>
             </div>
-          )}
-        </form>
+          </div>
+        )}
       </div>
     </div>
   );

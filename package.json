@@ -10,11 +10,7 @@
     "preview": "vite preview",
     "build:hostinger": "npm run build && npm run optimize",
     "optimize": "node scripts/optimize-build.js",
-    "deploy:hostinger": "npm run build:hostinger && echo '✅ Build listo para Hostinger - Sube la carpeta dist/'",
-    "preview:production": "npm run build && npm run preview"
-    "build:hostinger": "npm run build && npm run optimize",
-    "optimize": "node scripts/optimize-build.js",
-    "deploy:hostinger": "npm run build:hostinger && echo '✅ Build listo para Hostinger - Sube la carpeta dist/'",
+    "deploy:hostinger": "npm run build:hostinger && echo 'Build listo para Hostinger - Sube la carpeta dist/'",
     "preview:production": "npm run build && npm run preview"
   },
   "dependencies": {

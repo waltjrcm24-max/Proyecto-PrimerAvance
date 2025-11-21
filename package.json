@@ -7,7 +7,9 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "deploy": "npm run build && echo 'Build completed for deployment'",
+    "git:setup": "git remote set-url origin $GITHUB_REPO_URL"
   },
   "dependencies": {
     "chart.js": "^4.5.0",

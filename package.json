@@ -8,8 +8,14 @@
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "deploy": "npm run build && echo 'Build completed for deployment'",
-    "git:setup": "git remote set-url origin $GITHUB_REPO_URL"
+    "build:hostinger": "npm run build && npm run optimize",
+    "optimize": "node scripts/optimize-build.js",
+    "deploy:hostinger": "npm run build:hostinger && echo '✅ Build listo para Hostinger - Sube la carpeta dist/'",
+    "preview:production": "npm run build && npm run preview"
+    "build:hostinger": "npm run build && npm run optimize",
+    "optimize": "node scripts/optimize-build.js",
+    "deploy:hostinger": "npm run build:hostinger && echo '✅ Build listo para Hostinger - Sube la carpeta dist/'",
+    "preview:production": "npm run build && npm run preview"
   },
   "dependencies": {
     "chart.js": "^4.5.0",

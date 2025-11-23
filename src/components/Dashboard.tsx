@@ -13,6 +13,7 @@ import {
   PointElement,
   LineElement,
 } from 'chart.js';
+import ChartDataLabels from 'chartjs-plugin-datalabels';
 import { BarChart3, PieChart, TrendingUp, Filter, X } from 'lucide-react';
 import { WasteRecord } from '../types';
 
@@ -25,7 +26,8 @@ ChartJS.register(
   Legend,
   ArcElement,
   PointElement,
-  LineElement
+  LineElement,
+  ChartDataLabels
 );
 
 interface DashboardProps {
@@ -94,34 +96,48 @@ export default function Dashboard({ records }: DashboardProps) {
   const wasteTypes = Array.from(new Set(records.map(record => record.type)));
   const locations = Array.from(new Set(records.map(record => record.location)));
 
-  // Chart colors
-  const colors = [
-    '#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6',
-    '#06B6D4', '#84CC16', '#F97316', '#EC4899', '#6B7280'
-  ];
+  // Generate color shades for uniform palettes
+  const generateBlueShades = (count: number) => [
+    '#1E3A8A', '#1E40AF', '#2563EB', '#3B82F6', '#60A5FA',
+    '#93C5FD', '#BFDBFE', '#DBEAFE', '#EFF6FF', '#F0F9FF'
+  ].slice(0, count);
 
-  // Bar Chart Data
+  const generateOrangeShades = (count: number) => [
+    '#7C2D12', '#9A3412', '#C2410C', '#EA580C', '#F97316',
+    '#FB923C', '#FDBA74', '#FED7AA', '#FFEDD5', '#FFF7ED'
+  ].slice(0, count);
+
+  const generateGreenShades = (count: number) => [
+    '#064E3B', '#065F46', '#047857', '#059669', '#10B981',
+    '#34D399', '#6EE7B7', '#A7F3D0', '#D1FAE5', '#ECFDF5'
+  ].slice(0, count);
+
+  // Bar Chart Data - Ordenado de mayor a menor
+  const sortedWasteByType = Object.entries(wasteByType)
+    .sort(([, a], [, b]) => b - a)
+    .reduce((acc, [key, value]) => ({ ...acc, [key]: value }), {});
+
   const barData = {
-    labels: Object.keys(wasteByType),
+    labels: Object.keys(sortedWasteByType),
     datasets: [
       {
         label: 'Peso (kg)',
-        data: Object.values(wasteByType),
-        backgroundColor: colors.slice(0, Object.keys(wasteByType).length),
-        borderColor: colors.slice(0, Object.keys(wasteByType).length),
+        data: Object.values(sortedWasteByType),
+        backgroundColor: generateBlueShades(Object.keys(sortedWasteByType).length),
+        borderColor: generateBlueShades(Object.keys(sortedWasteByType).length),
         borderWidth: 1,
         borderRadius: 4,
       },
     ],
   };
 
-  // Pie Chart Data
+  // Pie Chart Data - Con tonos verdes
   const pieData = {
     labels: Object.keys(wasteByType),
     datasets: [
       {
         data: Object.values(wasteByType),
-        backgroundColor: colors.slice(0, Object.keys(wasteByType).length),
+        backgroundColor: generateGreenShades(Object.keys(wasteByType).length),
         borderColor: '#ffffff',
         borderWidth: 2,
       },
@@ -149,15 +165,19 @@ export default function Dashboard({ records }: DashboardProps) {
     ],
   };
 
-  // Location Chart Data
+  // Location Chart Data - Ordenado de mayor a menor
+  const sortedWasteByLocation = Object.entries(wasteByLocation)
+    .sort(([, a], [, b]) => b - a)
+    .reduce((acc, [key, value]) => ({ ...acc, [key]: value }), {});
+
   const locationData = {
-    labels: Object.keys(wasteByLocation),
+    labels: Object.keys(sortedWasteByLocation),
     datasets: [
       {
         label: 'Peso por Ubicación (kg)',
-        data: Object.values(wasteByLocation),
-        backgroundColor: colors.slice(0, Object.keys(wasteByLocation).length),
-        borderColor: colors.slice(0, Object.keys(wasteByLocation).length),
+        data: Object.values(sortedWasteByLocation),
+        backgroundColor: generateOrangeShades(Object.keys(sortedWasteByLocation).length),
+        borderColor: generateOrangeShades(Object.keys(sortedWasteByLocation).length),
         borderWidth: 1,
         borderRadius: 4,
       },
@@ -171,6 +191,9 @@ export default function Dashboard({ records }: DashboardProps) {
       legend: {
         position: 'top' as const,
       },
+      datalabels: {
+        display: false
+      }
     },
     scales: {
       y: {
@@ -186,6 +209,30 @@ export default function Dashboard({ records }: DashboardProps) {
       legend: {
         position: 'right' as const,
       },
+      tooltip: {
+        callbacks: {
+          label: function(context: any) {
+            const label = context.label || '';
+            const value = context.parsed || 0;
+            const total = context.dataset.data.reduce((acc: number, val: number) => acc + val, 0);
+            const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : '0';
+            return `${label}: ${value.toFixed(1)} kg (${percentage}%)`;
+          }
+        }
+      },
+      datalabels: {
+        display: true,
+        color: '#fff',
+        font: {
+          weight: 'bold' as const,
+          size: 12
+        },
+        formatter: function(value: number, context: any) {
+          const total = context.dataset.data.reduce((acc: number, val: number) => acc + val, 0);
+          const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : '0';
+          return `${value.toFixed(1)}kg\n${percentage}%`;
+        }
+      }
     },
   };
 

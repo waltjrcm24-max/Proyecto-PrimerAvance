@@ -37,8 +37,8 @@ interface DashboardProps {
 export default function Dashboard({ records }: DashboardProps) {
   const [showFilters, setShowFilters] = useState(false);
   const [filters, setFilters] = useState({
-    type: '',
-    location: '',
+    types: [] as string[],
+    locations: [] as string[],
     startDate: '',
     endDate: '',
     minWeight: '',
@@ -47,10 +47,11 @@ export default function Dashboard({ records }: DashboardProps) {
     endTime: ''
   });
 
-  // Apply filters to records
+  // Apply filters to records - Multi-select support
   const filteredRecords = records.filter(record => {
-    if (filters.type && record.type !== filters.type) return false;
-    if (filters.location && record.location !== filters.location) return false;
+    // Multi-select: if array has items, record must be in the array
+    if (filters.types.length > 0 && !filters.types.includes(record.type)) return false;
+    if (filters.locations.length > 0 && !filters.locations.includes(record.location)) return false;
     if (filters.startDate && record.date < filters.startDate) return false;
     if (filters.endDate && record.date > filters.endDate) return false;
     if (filters.minWeight && record.weight < parseFloat(filters.minWeight)) return false;
@@ -62,8 +63,8 @@ export default function Dashboard({ records }: DashboardProps) {
 
   const clearFilters = () => {
     setFilters({
-      type: '',
-      location: '',
+      types: [],
+      locations: [],
       startDate: '',
       endDate: '',
       minWeight: '',
@@ -73,7 +74,29 @@ export default function Dashboard({ records }: DashboardProps) {
     });
   };
 
-  const hasActiveFilters = Object.values(filters).some(value => value !== '');
+  const hasActiveFilters = filters.types.length > 0 || filters.locations.length > 0 ||
+    Object.entries(filters).some(([key, value]) =>
+      key !== 'types' && key !== 'locations' && value !== ''
+    );
+
+  // Toggle functions for multi-select
+  const toggleType = (type: string) => {
+    setFilters(prev => ({
+      ...prev,
+      types: prev.types.includes(type)
+        ? prev.types.filter(t => t !== type)
+        : [...prev.types, type]
+    }));
+  };
+
+  const toggleLocation = (location: string) => {
+    setFilters(prev => ({
+      ...prev,
+      locations: prev.locations.includes(location)
+        ? prev.locations.filter(l => l !== location)
+        : [...prev.locations, location]
+    }));
+  };
 
   // Process data for charts
   const wasteByType = filteredRecords.reduce((acc, record) => {
@@ -96,21 +119,45 @@ export default function Dashboard({ records }: DashboardProps) {
   const wasteTypes = Array.from(new Set(records.map(record => record.type)));
   const locations = Array.from(new Set(records.map(record => record.location)));
 
-  // Generate color shades for uniform palettes
-  const generateBlueShades = (count: number) => [
-    '#1E3A8A', '#1E40AF', '#2563EB', '#3B82F6', '#60A5FA',
-    '#93C5FD', '#BFDBFE', '#DBEAFE', '#EFF6FF', '#F0F9FF'
-  ].slice(0, count);
+  // Generate color palettes with good contrast for large datasets
+  const generateBlueShades = (count: number) => {
+    // Base colors alternating for better visibility
+    const baseColors = [
+      '#1E3A8A', '#2563EB', '#3B82F6', '#1E40AF', '#60A5FA',
+      '#0C4A6E', '#0369A1', '#0284C7', '#0891B2', '#06B6D4'
+    ];
+    const colors = [];
+    for (let i = 0; i < count; i++) {
+      colors.push(baseColors[i % baseColors.length]);
+    }
+    return colors;
+  };
 
-  const generateOrangeShades = (count: number) => [
-    '#7C2D12', '#9A3412', '#C2410C', '#EA580C', '#F97316',
-    '#FB923C', '#FDBA74', '#FED7AA', '#FFEDD5', '#FFF7ED'
-  ].slice(0, count);
+  const generateOrangeShades = (count: number) => {
+    // Base colors alternating for better visibility
+    const baseColors = [
+      '#7C2D12', '#C2410C', '#EA580C', '#F97316', '#9A3412',
+      '#B45309', '#D97706', '#F59E0B', '#92400E', '#78350F'
+    ];
+    const colors = [];
+    for (let i = 0; i < count; i++) {
+      colors.push(baseColors[i % baseColors.length]);
+    }
+    return colors;
+  };
 
-  const generateGreenShades = (count: number) => [
-    '#064E3B', '#065F46', '#047857', '#059669', '#10B981',
-    '#34D399', '#6EE7B7', '#A7F3D0', '#D1FAE5', '#ECFDF5'
-  ].slice(0, count);
+  const generateGreenShades = (count: number) => {
+    // Softer greens with good contrast
+    const baseColors = [
+      '#065F46', '#047857', '#059669', '#10B981', '#064E3B',
+      '#14B8A6', '#0D9488', '#15803D', '#16A34A', '#22C55E'
+    ];
+    const colors = [];
+    for (let i = 0; i < count; i++) {
+      colors.push(baseColors[i % baseColors.length]);
+    }
+    return colors;
+  };
 
   // Bar Chart Data - Ordenado de mayor a menor
   const sortedWasteByType = Object.entries(wasteByType)
@@ -198,7 +245,15 @@ export default function Dashboard({ records }: DashboardProps) {
     scales: {
       y: {
         beginAtZero: true,
+        grid: {
+          color: 'rgba(0, 0, 0, 0.05)',
+        }
       },
+      x: {
+        grid: {
+          display: false
+        }
+      }
     },
   };
 
@@ -208,8 +263,23 @@ export default function Dashboard({ records }: DashboardProps) {
     plugins: {
       legend: {
         position: 'right' as const,
+        labels: {
+          padding: 15,
+          font: {
+            size: 12
+          }
+        }
       },
       tooltip: {
+        backgroundColor: 'rgba(0, 0, 0, 0.85)',
+        padding: 12,
+        titleFont: {
+          size: 14,
+          weight: 'bold' as const
+        },
+        bodyFont: {
+          size: 13
+        },
         callbacks: {
           label: function(context: any) {
             const label = context.label || '';
@@ -222,14 +292,25 @@ export default function Dashboard({ records }: DashboardProps) {
       },
       datalabels: {
         display: true,
-        color: '#fff',
+        color: (context: any) => {
+          // Use white for dark colors, dark text for light colors
+          const value = context.dataset.data[context.dataIndex];
+          const total = context.dataset.data.reduce((acc: number, val: number) => acc + val, 0);
+          const percentage = (value / total) * 100;
+          // Only show label if slice is large enough (>5%)
+          return percentage > 5 ? '#FFFFFF' : 'transparent';
+        },
         font: {
           weight: 'bold' as const,
-          size: 12
+          size: 11
         },
+        textShadowColor: 'rgba(0, 0, 0, 0.5)',
+        textShadowBlur: 4,
         formatter: function(value: number, context: any) {
           const total = context.dataset.data.reduce((acc: number, val: number) => acc + val, 0);
           const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : '0';
+          // Only show if >5%
+          if (parseFloat(percentage) <= 5) return '';
           return `${value.toFixed(1)}kg\n${percentage}%`;
         }
       }
@@ -278,40 +359,56 @@ export default function Dashboard({ records }: DashboardProps) {
         {/* Filters Panel */}
         {showFilters && (
           <div className="bg-gray-50 rounded-lg p-4 mb-6">
-            <h3 className="text-lg font-medium text-gray-900 mb-4">Filtros Interactivos</h3>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Tipo de Residuo:
-                </label>
-                <select
-                  value={filters.type}
-                  onChange={(e) => setFilters(prev => ({ ...prev, type: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                >
-                  <option value="">Todos los tipos</option>
-                  {wasteTypes.map(type => (
-                    <option key={type} value={type}>{type}</option>
-                  ))}
-                </select>
-              </div>
+            <h3 className="text-lg font-medium text-gray-900 mb-4">Filtros Comparativos (Multi-selección)</h3>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Ubicación:
-                </label>
-                <select
-                  value={filters.location}
-                  onChange={(e) => setFilters(prev => ({ ...prev, location: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                >
-                  <option value="">Todas las ubicaciones</option>
-                  {locations.map(location => (
-                    <option key={location} value={location}>{location}</option>
-                  ))}
-                </select>
+            {/* Multi-select Type Filter */}
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Tipos de Residuo ({filters.types.length} seleccionado{filters.types.length !== 1 ? 's' : ''}):
+              </label>
+              <div className="flex flex-wrap gap-2">
+                {wasteTypes.map(type => (
+                  <button
+                    key={type}
+                    onClick={() => toggleType(type)}
+                    className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all ${
+                      filters.types.includes(type)
+                        ? 'bg-blue-600 text-white shadow-md'
+                        : 'bg-white text-gray-700 border border-gray-300 hover:border-blue-400 hover:bg-blue-50'
+                    }`}
+                  >
+                    {filters.types.includes(type) && '✓ '}
+                    {type}
+                  </button>
+                ))}
               </div>
+            </div>
+
+            {/* Multi-select Location Filter */}
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Ubicaciones ({filters.locations.length} seleccionada{filters.locations.length !== 1 ? 's' : ''}):
+              </label>
+              <div className="flex flex-wrap gap-2">
+                {locations.map(location => (
+                  <button
+                    key={location}
+                    onClick={() => toggleLocation(location)}
+                    className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all ${
+                      filters.locations.includes(location)
+                        ? 'bg-orange-600 text-white shadow-md'
+                        : 'bg-white text-gray-700 border border-gray-300 hover:border-orange-400 hover:bg-orange-50'
+                    }`}
+                  >
+                    {filters.locations.includes(location) && '✓ '}
+                    {location}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Other Filters */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">

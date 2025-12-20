@@ -24,10 +24,12 @@ const WASTE_TYPES = [
   'Tetrapak',
   'Textiles',
   'Chatarra',
-  'Café para composta'
+  'Café para composta',
+  'Residuos para rancho'
 ];
 
 const LOCATIONS = [
+  'NA (No aplica)',
   'Áreas públicas',
   'Albercas',
   'Almacén',

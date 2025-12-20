@@ -144,10 +144,20 @@ const WASTE_TYPES = [
     bgColor: 'bg-amber-100',
     borderColor: 'border-amber-400',
     special: true
+  },
+  {
+    id: 'residuos-rancho',
+    name: 'Residuos para rancho',
+    icon: '🏜️',
+    color: 'from-yellow-600 to-amber-700',
+    bgColor: 'bg-yellow-100',
+    borderColor: 'border-yellow-400',
+    special: true
   }
 ];
 
 const HOTEL_AREAS = [
+  { id: 'na', name: 'NA (No aplica)', icon: '🚫' },
   { id: 'areas-publicas', name: 'Áreas públicas', icon: '🏛️' },
   { id: 'albercas', name: 'Albercas', icon: '🏊‍♂️' },
   { id: 'almacen', name: 'Almacén', icon: '📦' },

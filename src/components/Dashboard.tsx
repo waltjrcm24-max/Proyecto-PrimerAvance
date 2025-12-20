@@ -34,6 +34,80 @@ interface DashboardProps {
   records: WasteRecord[];
 }
 
+// Definir TODOS los tipos de residuos disponibles
+const ALL_WASTE_TYPES = [
+  'Orgánicos',
+  'Orgánicos (naranja/limón)',
+  'Inorgánicos - no valorizables',
+  'Pet',
+  'Plástico duro',
+  'Emplaye',
+  'BOPP (envolturas)',
+  'Vidrio',
+  'Aluminio',
+  'Cartón',
+  'Papel, libros, revistas y periódicos',
+  'Lata de conserva o latón',
+  'Tetrapak',
+  'Textiles',
+  'Chatarra',
+  'Café para composta',
+  'Residuos para rancho'
+];
+
+// Definir TODAS las ubicaciones disponibles
+const ALL_LOCATIONS = [
+  'NA (No aplica)',
+  'Áreas públicas',
+  'Albercas',
+  'Almacén',
+  'Ama de llaves',
+  'Audio visual',
+  'Banquetes',
+  'Barefoot',
+  'Bares',
+  'Barracuda',
+  'Bodas',
+  'Bordeaux',
+  'Carpintería',
+  'Club Preferred',
+  'Cocina central',
+  'Coco Café',
+  'Comedor empleados',
+  'Comisariato',
+  'Edificios',
+  'El Patio',
+  'Entretenimiento',
+  'Especialidades',
+  'Eventos/Banquetes',
+  'Himitsu',
+  'Jardinería',
+  'Lavandería',
+  'Limpieza de playa',
+  'Manatees',
+  'Mantenimiento',
+  'Market',
+  'Market Café',
+  'Minibares/Servibar',
+  'Oceana',
+  'Oficinas',
+  'Poblado',
+  'Portofino',
+  'Proveedores',
+  'RH',
+  'Room Service/IRD',
+  'Seaside',
+  'Seaside Grill',
+  'Seguridad',
+  'Sommelier',
+  'Spa',
+  'Steward',
+  'Tiendas',
+  'Tiendita colegas',
+  'UVC',
+  'Chatos'
+];
+
 export default function Dashboard({ records }: DashboardProps) {
   const [showFilters, setShowFilters] = useState(false);
   const [filters, setFilters] = useState({
@@ -98,16 +172,30 @@ export default function Dashboard({ records }: DashboardProps) {
     }));
   };
 
-  // Process data for charts
-  const wasteByType = filteredRecords.reduce((acc, record) => {
-    acc[record.type] = (acc[record.type] || 0) + record.weight;
+  // Process data for charts - Inicializar con TODOS los tipos y ubicaciones en 0
+  const wasteByType = ALL_WASTE_TYPES.reduce((acc, type) => {
+    acc[type] = 0;
     return acc;
   }, {} as Record<string, number>);
 
-  const wasteByLocation = filteredRecords.reduce((acc, record) => {
-    acc[record.location] = (acc[record.location] || 0) + record.weight;
+  // Sumar los pesos de los registros filtrados
+  filteredRecords.forEach(record => {
+    if (wasteByType[record.type] !== undefined) {
+      wasteByType[record.type] += record.weight;
+    }
+  });
+
+  const wasteByLocation = ALL_LOCATIONS.reduce((acc, location) => {
+    acc[location] = 0;
     return acc;
   }, {} as Record<string, number>);
+
+  // Sumar los pesos de los registros filtrados
+  filteredRecords.forEach(record => {
+    if (wasteByLocation[record.location] !== undefined) {
+      wasteByLocation[record.location] += record.weight;
+    }
+  });
 
   const wasteByDate = filteredRecords.reduce((acc, record) => {
     const date = record.date;
@@ -115,9 +203,9 @@ export default function Dashboard({ records }: DashboardProps) {
     return acc;
   }, {} as Record<string, number>);
 
-  // Get unique values for filter options
-  const wasteTypes = Array.from(new Set(records.map(record => record.type)));
-  const locations = Array.from(new Set(records.map(record => record.location)));
+  // Usar TODOS los tipos y ubicaciones disponibles (no solo los que tienen datos)
+  const wasteTypes = ALL_WASTE_TYPES;
+  const locations = ALL_LOCATIONS;
 
   // Generate color palettes with good contrast for large datasets
   const generateBlueShades = (count: number) => {
@@ -361,48 +449,76 @@ export default function Dashboard({ records }: DashboardProps) {
           <div className="bg-gray-50 rounded-lg p-4 mb-6">
             <h3 className="text-lg font-medium text-gray-900 mb-4">Filtros Comparativos (Multi-selección)</h3>
 
-            {/* Multi-select Type Filter */}
+            {/* Multi-select Type Filter - Lista Visual */}
             <div className="mb-6">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-700 mb-3">
                 Tipos de Residuo ({filters.types.length} seleccionado{filters.types.length !== 1 ? 's' : ''}):
               </label>
-              <div className="flex flex-wrap gap-2">
-                {wasteTypes.map(type => (
-                  <button
+              <div className="bg-white border border-gray-200 rounded-lg overflow-hidden max-h-64 overflow-y-auto">
+                {wasteTypes.map((type, index) => (
+                  <div
                     key={type}
                     onClick={() => toggleType(type)}
-                    className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all ${
+                    className={`flex items-center px-4 py-3 cursor-pointer transition-colors ${
                       filters.types.includes(type)
-                        ? 'bg-blue-600 text-white shadow-md'
-                        : 'bg-white text-gray-700 border border-gray-300 hover:border-blue-400 hover:bg-blue-50'
-                    }`}
+                        ? 'bg-blue-50 border-l-4 border-l-blue-600'
+                        : 'hover:bg-gray-50 border-l-4 border-l-transparent'
+                    } ${index !== wasteTypes.length - 1 ? 'border-b border-gray-100' : ''}`}
                   >
-                    {filters.types.includes(type) && '✓ '}
-                    {type}
-                  </button>
+                    <div className={`w-5 h-5 rounded border-2 mr-3 flex items-center justify-center ${
+                      filters.types.includes(type)
+                        ? 'bg-blue-600 border-blue-600'
+                        : 'border-gray-300'
+                    }`}>
+                      {filters.types.includes(type) && (
+                        <svg className="w-3 h-3 text-white" fill="none" strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" viewBox="0 0 24 24" stroke="currentColor">
+                          <path d="M5 13l4 4L19 7"></path>
+                        </svg>
+                      )}
+                    </div>
+                    <span className={`text-sm ${
+                      filters.types.includes(type) ? 'font-medium text-blue-900' : 'text-gray-700'
+                    }`}>
+                      {type}
+                    </span>
+                  </div>
                 ))}
               </div>
             </div>
 
-            {/* Multi-select Location Filter */}
+            {/* Multi-select Location Filter - Lista Visual */}
             <div className="mb-6">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-700 mb-3">
                 Ubicaciones ({filters.locations.length} seleccionada{filters.locations.length !== 1 ? 's' : ''}):
               </label>
-              <div className="flex flex-wrap gap-2">
-                {locations.map(location => (
-                  <button
+              <div className="bg-white border border-gray-200 rounded-lg overflow-hidden max-h-64 overflow-y-auto">
+                {locations.map((location, index) => (
+                  <div
                     key={location}
                     onClick={() => toggleLocation(location)}
-                    className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all ${
+                    className={`flex items-center px-4 py-3 cursor-pointer transition-colors ${
                       filters.locations.includes(location)
-                        ? 'bg-orange-600 text-white shadow-md'
-                        : 'bg-white text-gray-700 border border-gray-300 hover:border-orange-400 hover:bg-orange-50'
-                    }`}
+                        ? 'bg-orange-50 border-l-4 border-l-orange-600'
+                        : 'hover:bg-gray-50 border-l-4 border-l-transparent'
+                    } ${index !== locations.length - 1 ? 'border-b border-gray-100' : ''}`}
                   >
-                    {filters.locations.includes(location) && '✓ '}
-                    {location}
-                  </button>
+                    <div className={`w-5 h-5 rounded border-2 mr-3 flex items-center justify-center ${
+                      filters.locations.includes(location)
+                        ? 'bg-orange-600 border-orange-600'
+                        : 'border-gray-300'
+                    }`}>
+                      {filters.locations.includes(location) && (
+                        <svg className="w-3 h-3 text-white" fill="none" strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" viewBox="0 0 24 24" stroke="currentColor">
+                          <path d="M5 13l4 4L19 7"></path>
+                        </svg>
+                      )}
+                    </div>
+                    <span className={`text-sm ${
+                      filters.locations.includes(location) ? 'font-medium text-orange-900' : 'text-gray-700'
+                    }`}>
+                      {location}
+                    </span>
+                  </div>
                 ))}
               </div>
             </div>

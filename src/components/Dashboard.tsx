@@ -172,8 +172,14 @@ export default function Dashboard({ records }: DashboardProps) {
     }));
   };
 
-  // Process data for charts - Inicializar con TODOS los tipos y ubicaciones en 0
-  const wasteByType = ALL_WASTE_TYPES.reduce((acc, type) => {
+  // Determinar qué elementos mostrar en las gráficas
+  // Si hay filtros activos, mostrar SOLO los seleccionados
+  // Si NO hay filtros, mostrar TODOS los disponibles
+  const typesToShow = filters.types.length > 0 ? filters.types : ALL_WASTE_TYPES;
+  const locationsToShow = filters.locations.length > 0 ? filters.locations : ALL_LOCATIONS;
+
+  // Process data for charts - Inicializar solo los elementos que se van a mostrar
+  const wasteByType = typesToShow.reduce((acc, type) => {
     acc[type] = 0;
     return acc;
   }, {} as Record<string, number>);
@@ -185,7 +191,7 @@ export default function Dashboard({ records }: DashboardProps) {
     }
   });
 
-  const wasteByLocation = ALL_LOCATIONS.reduce((acc, location) => {
+  const wasteByLocation = locationsToShow.reduce((acc, location) => {
     acc[location] = 0;
     return acc;
   }, {} as Record<string, number>);
@@ -203,7 +209,7 @@ export default function Dashboard({ records }: DashboardProps) {
     return acc;
   }, {} as Record<string, number>);
 
-  // Usar TODOS los tipos y ubicaciones disponibles (no solo los que tienen datos)
+  // Para los filtros, siempre mostrar TODOS los elementos disponibles
   const wasteTypes = ALL_WASTE_TYPES;
   const locations = ALL_LOCATIONS;
 

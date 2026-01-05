@@ -22,7 +22,7 @@ const EMAIL_CONFIG = {
   EMAIL_USER: "tucorreo@gmail.com",
 
   // Contraseña de aplicación de Gmail (16 caracteres sin espacios)
-  EMAIL_PASSWORD: "xxxx xxxx xxxx xxxx",
+  EMAIL_PASSWORD: "lzlybjshgghonqyb",
 
   // Configuración SMTP de Gmail (NO cambiar a menos que uses otro proveedor)
   SMTP_HOST: "smtp.gmail.com",

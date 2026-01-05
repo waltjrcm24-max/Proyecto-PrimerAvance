@@ -105,15 +105,87 @@ export default function Reports({ records, onRecordDeleted }: ReportsProps) {
     setEmailConfigs(emailConfigs.filter(email => email.id !== id));
   };
 
-  const sendReport = () => {
+  const sendReport = async () => {
     const activeEmails = emailConfigs.filter(config => config.active);
     if (activeEmails.length === 0) {
       alert('No hay correos configurados para enviar el reporte');
       return;
     }
 
-    // Simulate sending email
-    alert(`Reporte enviado a ${activeEmails.length} destinatario(s): ${activeEmails.map(e => e.email).join(', ')}`);
+    const periodText = {
+      daily: 'Diario',
+      weekly: 'Semanal',
+      monthly: 'Mensual',
+      custom: 'Personalizado'
+    };
+
+    try {
+      // Prepare report data based on format
+      let reportData;
+
+      if (downloadFormat === 'json') {
+        reportData = {
+          titulo: `Reporte ${periodText[reportPeriod]} de Residuos Sólidos`,
+          hotel: 'Secrets Playa Blanca Costa Mujeres',
+          fechaGeneracion: new Date().toLocaleString('es-MX'),
+          periodo: {
+            tipo: periodText[reportPeriod],
+            fechaInicio: dateStart.toLocaleDateString('es-MX'),
+            fechaFin: dateEnd.toLocaleDateString('es-MX')
+          },
+          estadisticas: {
+            totalRegistros: filteredRecords.length,
+            pesoTotal: totalWeight.toFixed(2) + ' kg',
+            pesoPromedio: averageWeight.toFixed(2) + ' kg',
+            tiposResiduos: wasteTypes.length,
+            ubicaciones: locations.length
+          },
+          registros: filteredRecords
+        };
+      } else {
+        reportData = {
+          registros: filteredRecords,
+          estadisticas: {
+            totalRegistros: filteredRecords.length,
+            pesoTotal: totalWeight.toFixed(2) + ' kg'
+          }
+        };
+      }
+
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-report-email`,
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            recipients: activeEmails.map(e => e.email),
+            reportData,
+            reportFormat: downloadFormat,
+            periodText: periodText[reportPeriod],
+            startDate: dateStart.toISOString(),
+            endDate: dateEnd.toISOString()
+          })
+        }
+      );
+
+      const result = await response.json();
+
+      if (response.ok) {
+        alert(`✅ Reporte enviado exitosamente a:\n${activeEmails.map(e => `• ${e.name} (${e.email})`).join('\n')}`);
+      } else {
+        if (result.message?.includes('configura EMAIL_USER')) {
+          alert('⚠️ El correo no está configurado.\n\nPor favor, configura las credenciales de correo en la Edge Function.\n\nVe a la documentación GUIA-ENVIO-EMAIL.md para más detalles.');
+        } else {
+          alert(`❌ Error al enviar el reporte:\n${result.details || result.error}`);
+        }
+      }
+    } catch (error) {
+      console.error('Error sending report:', error);
+      alert('❌ Error al enviar el reporte. Por favor verifica la configuración del correo.');
+    }
   };
 
   const generateCSVReport = () => {

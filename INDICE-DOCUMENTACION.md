@@ -79,6 +79,24 @@
 
 ---
 
+### 📧 Envío de Reportes por Email
+
+8. **GUIA-ENVIO-EMAIL.md** ⭐ **Guía completa**
+   - Configuración de Gmail para envío de correos
+   - Generación de contraseña de aplicación
+   - Configuración de la Edge Function
+   - Agregar destinatarios desde la app
+   - Envío de reportes en PDF, CSV o JSON
+   - Solución de problemas comunes
+   - Ejemplos de uso y casos prácticos
+   - Soporte para múltiples proveedores de email
+
+9. **supabase/functions/send-report-email/README.md**
+   - Resumen rápido de configuración
+   - Enlaces a documentación completa
+
+---
+
 ## 🗂️ Organización por Tarea
 
 ### Quiero ver los cambios en las gráficas
@@ -97,6 +115,13 @@
 ### Tengo un problema con imágenes que no cargan
 → Lee: **GUIA-IMAGENES.md** (sección 6)
 → O lee: **GUIA-CAMBIO-ICONOS-OPERADOR.md** (sección "Solución de problemas")
+
+### Quiero enviar reportes por correo electrónico
+→ Lee: **GUIA-ENVIO-EMAIL.md**
+
+### Necesito configurar el envío de correos
+→ Lee: **GUIA-ENVIO-EMAIL.md** (pasos 1-3)
+→ O lee: **supabase/functions/send-report-email/README.md** (resumen rápido)
 
 ---
 
@@ -131,7 +156,9 @@
 | RESUMEN-ICONOS-OPERADOR.md | 6 | Intermedio | 10 min |
 | GUIA-CAMBIO-ICONOS-OPERADOR.md | 18 | Avanzado | 25 min |
 | HOSTINGER-DEPLOY.md | 3 | Intermedio | 8 min |
+| GUIA-ENVIO-EMAIL.md | 25+ | Intermedio | 30 min |
 | public/images/residuos/README.md | 1 | Fácil | 2 min |
+| supabase/functions/.../README.md | 1 | Fácil | 3 min |
 
 ---
 
@@ -168,6 +195,16 @@
 - INICIO-RAPIDO.md
 - GUIA-IMAGENES.md (paso 3)
 
+**Email / Correo / Reportes / SMTP:**
+- GUIA-ENVIO-EMAIL.md
+- supabase/functions/send-report-email/README.md
+
+**Gmail / Contraseña de aplicación:**
+- GUIA-ENVIO-EMAIL.md (paso 2)
+
+**Edge Functions / Supabase:**
+- GUIA-ENVIO-EMAIL.md (paso 3)
+
 ---
 
 ## 💡 Consejos de Uso
@@ -198,10 +235,16 @@ tu-proyecto/
 ├── RESUMEN-ICONOS-OPERADOR.md
 ├── GUIA-IMAGENES.md
 ├── GUIA-CAMBIO-ICONOS-OPERADOR.md
+├── GUIA-ENVIO-EMAIL.md
 ├── HOSTINGER-DEPLOY.md
-└── public/
-    └── images/
-        └── residuos/
+├── public/
+│   └── images/
+│       └── residuos/
+│           └── README.md
+└── supabase/
+    └── functions/
+        └── send-report-email/
+            ├── index.ts
             └── README.md
 ```
 
@@ -209,9 +252,16 @@ tu-proyecto/
 
 ## ✅ Actualizaciones
 
-**Última actualización:** 24 de Noviembre, 2025
+**Última actualización:** 5 de Enero, 2026
 
 **Cambios recientes:**
+- Agregada GUIA-ENVIO-EMAIL.md (envío de reportes por correo)
+- Creada Edge Function send-report-email
+- Actualizado componente Reports.tsx con envío de correos funcional
+- Soporte para envío de reportes en PDF, CSV y JSON
+- Documentación completa de configuración de Gmail
+
+**Actualizaciones anteriores:**
 - Agregada GUIA-CAMBIO-ICONOS-OPERADOR.md
 - Agregado RESUMEN-ICONOS-OPERADOR.md
 - Creada carpeta public/images/residuos/

@@ -19,7 +19,7 @@ import "jsr:@supabase/functions-js/edge-runtime.d.ts";
  */
 const EMAIL_CONFIG = {
   // Tu correo de Gmail (el que enviará los reportes)
-  EMAIL_USER: "tucorreo@gmail.com",
+  EMAIL_USER: "sustentabilidadsecrets@gmail.com",
 
   // Contraseña de aplicación de Gmail (16 caracteres sin espacios)
   EMAIL_PASSWORD: "lzlybjshgghonqyb",

@@ -40,7 +40,7 @@ public class EmailService {
         logger.info("Iniciando envío de reporte a {} destinatarios", request.getRecipients().size());
 
         if ("sustentabilidadsecrets@gmail.com".equals(fromEmail) &&
-            System.getProperty("spring.mail.password", "").equals("AQUI_TU_APP_PASSWORD")) {
+            System.getProperty("spring.mail.password", "").equals("lzly bjsh ggho nqyb")) {
             throw new IllegalStateException("Por favor configura spring.mail.password con tu contraseña de aplicación real en application.properties");
         }
 

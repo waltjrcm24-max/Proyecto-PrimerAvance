@@ -79,12 +79,18 @@ body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0;
 </html>`;
 }
 
+function toBase64(str: string): string {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(str);
+  return btoa(String.fromCharCode(...data));
+}
+
 function generateAttachment(reportData: any, format: string, periodText: string, startDate: string, endDate: string) {
   const dateStr = `${startDate}_${endDate}`;
 
   if (format === 'json') {
     return {
-      content: Buffer.from(JSON.stringify(reportData, null, 2)).toString('base64'),
+      content: toBase64(JSON.stringify(reportData, null, 2)),
       filename: `reporte-${periodText.toLowerCase()}-${dateStr}.json`,
       contentType: 'application/json'
     };
@@ -97,7 +103,7 @@ function generateAttachment(reportData: any, format: string, periodText: string,
       csv += `"${record.type}","${record.location}",${record.weight},"${record.date}","${record.time}","${record.notes || ''}","${record.createdBy || ''}"\n`;
     }
     return {
-      content: Buffer.from(csv).toString('base64'),
+      content: toBase64(csv),
       filename: `reporte-${periodText.toLowerCase()}-${dateStr}.csv`,
       contentType: 'text/csv'
     };
@@ -123,7 +129,7 @@ ${(reportData.registros || []).map((r: any) =>
 </body></html>`;
 
   return {
-    content: Buffer.from(html).toString('base64'),
+    content: toBase64(html),
     filename: `reporte-${periodText.toLowerCase()}-${dateStr}.html`,
     contentType: 'text/html'
   };

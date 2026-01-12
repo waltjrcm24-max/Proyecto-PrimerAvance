@@ -22,7 +22,7 @@ const EMAIL_CONFIG = {
   EMAIL_USER: "sustentabilidadsecrets@gmail.com",
 
   // Contraseña de aplicación de Gmail (16 caracteres sin espacios)
-  EMAIL_PASSWORD: "lzlybjshgghonqyb",
+  EMAIL_PASSWORD: "uwxpeirjtiamhiev",
 
   // Configuración SMTP de Gmail (NO cambiar a menos que uses otro proveedor)
   SMTP_HOST: "smtp.gmail.com",

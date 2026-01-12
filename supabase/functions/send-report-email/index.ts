@@ -144,16 +144,6 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    if (RESEND_API_KEY === "re_FFGqL8xA_C4y4xxihU9PcZYrkX2Rj4Xu1") {
-      return new Response(
-        JSON.stringify({
-          error: "Resend not configured",
-          message: "Obtén tu API key gratis en https://resend.com y pégala en RESEND_API_KEY"
-        }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
     const resend = new Resend(RESEND_API_KEY);
 
     const startDateFormatted = startDate.split('T')[0];

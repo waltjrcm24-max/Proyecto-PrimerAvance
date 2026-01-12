@@ -11,7 +11,7 @@ import { Resend } from 'npm:resend@2.0.0';
  * 5. Listo!
  */
 
-const RESEND_API_KEY = "re_TU_API_KEY_AQUI"; // Reemplaza con tu API key
+const RESEND_API_KEY = "re_FFGqL8xA_C4y4xxihU9PcZYrkX2Rj4Xu1"; // Reemplaza con tu API key
 
 const EMAIL_CONFIG = {
   FROM_EMAIL: "noreply@resend.dev", // O tu dominio verificado
@@ -144,7 +144,7 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    if (RESEND_API_KEY === "re_TU_API_KEY_AQUI") {
+    if (RESEND_API_KEY === "re_FFGqL8xA_C4y4xxihU9PcZYrkX2Rj4Xu1") {
       return new Response(
         JSON.stringify({
           error: "Resend not configured",

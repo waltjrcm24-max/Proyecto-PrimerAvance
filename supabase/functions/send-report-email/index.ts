@@ -1,35 +1,22 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
+import { Resend } from 'npm:resend@2.0.0';
 
 /**
- * CONFIGURACIÓN DE CORREO ELECTRÓNICO
+ * VERSIÓN CON RESEND.COM - MÉTODO MÁS SENCILLO
  *
- * IMPORTANTE: Configura aquí las credenciales del correo remitente
- *
- * Para Gmail:
- * 1. Ve a tu cuenta de Google: https://myaccount.google.com/
- * 2. Selecciona "Seguridad" en el menú lateral
- * 3. Busca "Verificación en dos pasos" y actívala si no lo está
- * 4. Busca "Contraseñas de aplicaciones" y haz clic
- * 5. Selecciona "Correo" y "Otro (nombre personalizado)"
- * 6. Escribe un nombre (ej: "Sistema Residuos")
- * 7. Copia la contraseña de 16 caracteres generada
- * 8. Pégala en EMAIL_PASSWORD abajo (sin espacios)
- *
- * NOTA: NO uses tu contraseña normal de Gmail, DEBE ser una contraseña de aplicación
+ * 1. Regístrate en https://resend.com (gratis)
+ * 2. Crea una API Key
+ * 3. Pégala abajo en RESEND_API_KEY
+ * 4. Despliega: npx supabase functions deploy send-report-email
+ * 5. Listo!
  */
+
+const RESEND_API_KEY = "re_TU_API_KEY_AQUI"; // Reemplaza con tu API key
+
 const EMAIL_CONFIG = {
-  // Tu correo de Gmail (el que enviará los reportes)
-  EMAIL_USER: "sustentabilidadsecrets@gmail.com",
-
-  // Contraseña de aplicación de Gmail (16 caracteres sin espacios)
-  EMAIL_PASSWORD: "uwxpeirjtiamhiev",
-
-  // Configuración SMTP de Gmail (NO cambiar a menos que uses otro proveedor)
-  SMTP_HOST: "smtp.gmail.com",
-  SMTP_PORT: 587,
-
-  // Nombre que aparecerá como remitente
-  FROM_NAME: "Sistema de Gestión de Residuos - Secrets Playa Blanca"
+  FROM_EMAIL: "noreply@resend.dev", // O tu dominio verificado
+  FROM_NAME: "Sistema de Gestión de Residuos - Secrets Playa Blanca",
+  REPLY_TO: "sustentabilidadsecrets@gmail.com"
 };
 
 const corsHeaders = {
@@ -37,6 +24,15 @@ const corsHeaders = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
   "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Client-Info, Apikey",
 };
+
+interface EmailRequest {
+  recipients: string[];
+  reportData: any;
+  reportFormat: 'pdf' | 'json' | 'csv';
+  periodText: string;
+  startDate: string;
+  endDate: string;
+}
 
 function generateEmailHTML(periodText: string, startDate: string, endDate: string, totalRecords: any, totalWeight: any): string {
   return `<!DOCTYPE html>
@@ -75,6 +71,7 @@ body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0;
 </div>
 <div class="footer">
 <p>Este es un correo automático, por favor no responda a este mensaje.</p>
+<p>Para consultas: ${EMAIL_CONFIG.REPLY_TO}</p>
 <p>&copy; 2025 Secrets Playa Blanca Costa Mujeres</p>
 </div>
 </div>
@@ -87,7 +84,7 @@ function generateAttachment(reportData: any, format: string, periodText: string,
 
   if (format === 'json') {
     return {
-      attachment: JSON.stringify(reportData, null, 2),
+      content: Buffer.from(JSON.stringify(reportData, null, 2)).toString('base64'),
       filename: `reporte-${periodText.toLowerCase()}-${dateStr}.json`,
       contentType: 'application/json'
     };
@@ -100,40 +97,36 @@ function generateAttachment(reportData: any, format: string, periodText: string,
       csv += `"${record.type}","${record.location}",${record.weight},"${record.date}","${record.time}","${record.notes || ''}","${record.createdBy || ''}"\n`;
     }
     return {
-      attachment: csv,
+      content: Buffer.from(csv).toString('base64'),
       filename: `reporte-${periodText.toLowerCase()}-${dateStr}.csv`,
       contentType: 'text/csv'
     };
   }
 
-  // PDF/HTML
   const html = `<!DOCTYPE html>
 <html>
 <head><meta charset="utf-8"><title>Reporte ${periodText}</title>
-<style>body{font-family:Arial;margin:40px}table{width:100%;border-collapse:collapse;margin-top:20px}th,td{border:1px solid #ddd;padding:8px}th{background:#0ea5e9;color:white}</style>
+<style>body{font-family:Arial;margin:40px}h1{color:#0ea5e9}table{width:100%;border-collapse:collapse;margin-top:20px}th,td{border:1px solid #ddd;padding:8px;text-align:left}th{background:#0ea5e9;color:white}@media print{body{margin:0}}</style>
 </head>
 <body>
 <h1>Reporte ${periodText} de Residuos Sólidos</h1>
 <p><strong>Período:</strong> ${startDate} - ${endDate}</p>
-<table><tr><th>Tipo</th><th>Ubicación</th><th>Peso (kg)</th><th>Fecha</th><th>Hora</th></tr>
-${(reportData.registros || []).map((r: any) => `<tr><td>${r.type}</td><td>${r.location}</td><td>${r.weight}</td><td>${r.date}</td><td>${r.time}</td></tr>`).join('')}
+<p><strong>Total registros:</strong> ${reportData.estadisticas?.totalRegistros || 'N/A'}</p>
+<p><strong>Peso total:</strong> ${reportData.estadisticas?.pesoTotal || 'N/A'}</p>
+<table>
+<tr><th>Tipo</th><th>Ubicación</th><th>Peso (kg)</th><th>Fecha</th><th>Hora</th><th>Notas</th></tr>
+${(reportData.registros || []).map((r: any) =>
+  `<tr><td>${r.type}</td><td>${r.location}</td><td>${r.weight}</td><td>${r.date}</td><td>${r.time}</td><td>${r.notes || ''}</td></tr>`
+).join('')}
 </table>
+<p style="margin-top:30px"><small>Para guardar como PDF: Archivo → Imprimir → Guardar como PDF</small></p>
 </body></html>`;
 
   return {
-    attachment: html,
+    content: Buffer.from(html).toString('base64'),
     filename: `reporte-${periodText.toLowerCase()}-${dateStr}.html`,
     contentType: 'text/html'
   };
-}
-
-interface EmailRequest {
-  recipients: string[];
-  reportData: any;
-  reportFormat: 'pdf' | 'json' | 'csv';
-  periodText: string;
-  startDate: string;
-  endDate: string;
 }
 
 Deno.serve(async (req: Request) => {
@@ -151,63 +144,57 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    // Validate email configuration
-    if (EMAIL_CONFIG.EMAIL_USER === "tucorreo@gmail.com" || EMAIL_CONFIG.EMAIL_PASSWORD === "xxxx xxxx xxxx xxxx") {
+    if (RESEND_API_KEY === "re_TU_API_KEY_AQUI") {
       return new Response(
         JSON.stringify({
-          error: "Email not configured",
-          message: "Por favor configura EMAIL_USER y EMAIL_PASSWORD en el código de la Edge Function"
+          error: "Resend not configured",
+          message: "Obtén tu API key gratis en https://resend.com y pégala en RESEND_API_KEY"
         }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // Formatear fechas
+    const resend = new Resend(RESEND_API_KEY);
+
     const startDateFormatted = startDate.split('T')[0];
     const endDateFormatted = endDate.split('T')[0];
 
-    // Obtener estadísticas
     const totalRecords = reportData.estadisticas?.totalRegistros || reportData.registros?.length || 'N/A';
     const totalWeight = reportData.estadisticas?.pesoTotal || 'N/A';
 
-    // Generar HTML del correo
     const htmlBody = generateEmailHTML(periodText, startDateFormatted, endDateFormatted, totalRecords, totalWeight);
+    const { content, filename, contentType } = generateAttachment(reportData, reportFormat, periodText, startDateFormatted, endDateFormatted);
 
-    // Generar adjunto según formato
-    const { attachment, filename, contentType } = generateAttachment(reportData, reportFormat, periodText, startDateFormatted, endDateFormatted);
-
-    // Preparar el correo para cada destinatario
     const emailPromises = recipients.map(async (recipient) => {
-      const emailData = {
-        from: {
-          name: EMAIL_CONFIG.FROM_NAME,
-          email: EMAIL_CONFIG.EMAIL_USER
-        },
+      const { data, error } = await resend.emails.send({
+        from: `${EMAIL_CONFIG.FROM_NAME} <${EMAIL_CONFIG.FROM_EMAIL}>`,
         to: recipient,
+        replyTo: EMAIL_CONFIG.REPLY_TO,
         subject: `Reporte ${periodText} de Residuos Sólidos - ${startDateFormatted} a ${endDateFormatted}`,
         html: htmlBody,
         attachments: [{
           filename,
-          content: attachment,
-          contentType
+          content,
         }]
-      };
+      });
 
-      // Enviar usando SMTP (simulado para Edge Functions)
-      // Nota: Edge Functions no soportan SMTP directamente
-      // Usa un servicio como Resend.com o SendGrid
-      console.log(`Enviando a ${recipient}:`, filename);
-      return { recipient, status: 'simulated' };
+      if (error) {
+        console.error(`Error enviando a ${recipient}:`, error);
+        throw error;
+      }
+
+      console.log(`Enviado exitosamente a ${recipient}, ID: ${data?.id}`);
+      return { recipient, status: 'sent', messageId: data?.id };
     });
 
-    await Promise.all(emailPromises);
+    const results = await Promise.all(emailPromises);
 
     return new Response(
       JSON.stringify({
         success: true,
-        message: `Reporte preparado para ${recipients.length} destinatario(s)`,
+        message: `Reporte enviado exitosamente a ${recipients.length} destinatario(s)`,
         recipients,
-        note: "Para envío real, integra Resend.com (https://resend.com) - es gratis hasta 3000 emails/mes"
+        results
       }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
@@ -217,8 +204,7 @@ Deno.serve(async (req: Request) => {
     return new Response(
       JSON.stringify({
         error: "Failed to send email",
-        details: error.message,
-        hint: "Verifica que EMAIL_USER y EMAIL_PASSWORD estén configurados correctamente"
+        details: error.message
       }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );

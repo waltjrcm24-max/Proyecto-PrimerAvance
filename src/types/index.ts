@@ -42,6 +42,19 @@ export interface ReportFilter {
   period: 'daily' | 'weekly' | 'monthly' | 'custom';
 }
 
+export interface Manifesto {
+  id: string;
+  type: string;
+  location: string;
+  weight: number;
+  date: string;
+  time: string;
+  exitDate: string;
+  authorizationNumber: string;
+  notes?: string;
+  createdBy: string;
+}
+
 export interface AuthState {
   isAuthenticated: boolean;
   user: User | null;

@@ -1,4 +1,4 @@
-import { User, WasteRecord, EmailConfig } from '../types';
+import { User, WasteRecord, EmailConfig, Manifesto } from '../types';
 import { OperatorMessage } from '../types';
 
 // Default admin user
@@ -24,6 +24,7 @@ const WASTE_RECORDS_KEY = 'waste_management_records';
 const EMAIL_CONFIG_KEY = 'waste_management_emails';
 const AUTH_KEY = 'waste_management_auth';
 const OPERATOR_MESSAGES_KEY = 'waste_management_operator_messages';
+const MANIFESTO_KEY = 'waste_management_manifesto';
 
 // Initialize default data
 export const initializeStorage = () => {
@@ -43,6 +44,10 @@ export const initializeStorage = () => {
   
   if (!localStorage.getItem(OPERATOR_MESSAGES_KEY)) {
     localStorage.setItem(OPERATOR_MESSAGES_KEY, JSON.stringify([]));
+  }
+
+  if (!localStorage.getItem(MANIFESTO_KEY)) {
+    localStorage.setItem(MANIFESTO_KEY, JSON.stringify([]));
   }
 };
 
@@ -158,4 +163,34 @@ export const markMessageAsRead = (id: string): void => {
 
 export const getUnreadMessagesCount = (): number => {
   return getOperatorMessages().filter(message => !message.read).length;
+};
+
+// Manifesto
+export const getManifestos = (): Manifesto[] => {
+  const manifests = localStorage.getItem(MANIFESTO_KEY);
+  return manifests ? JSON.parse(manifests) : [];
+};
+
+export const addManifesto = (manifesto: Omit<Manifesto, 'id'>): Manifesto => {
+  const manifests = getManifestos();
+  const newManifesto: Manifesto = {
+    ...manifesto,
+    id: Date.now().toString() + Math.random().toString(36).substr(2, 9)
+  };
+
+  manifests.push(newManifesto);
+  localStorage.setItem(MANIFESTO_KEY, JSON.stringify(manifests));
+  return newManifesto;
+};
+
+export const updateManifesto = (id: string, updates: Partial<Manifesto>): void => {
+  const manifests = getManifestos().map(manifesto =>
+    manifesto.id === id ? { ...manifesto, ...updates } : manifesto
+  );
+  localStorage.setItem(MANIFESTO_KEY, JSON.stringify(manifests));
+};
+
+export const deleteManifesto = (id: string): void => {
+  const manifests = getManifestos().filter(manifesto => manifesto.id !== id);
+  localStorage.setItem(MANIFESTO_KEY, JSON.stringify(manifests));
 };

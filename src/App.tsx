@@ -1,16 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, BarChart3, FileText, Settings } from 'lucide-react';
+import { Plus, BarChart3, FileText, Settings, Clipboard } from 'lucide-react';
 import Login from './components/Login';
 import Layout from './components/Layout';
 import WasteForm from './components/WasteForm';
 import TabletWasteForm from './components/TabletWasteForm';
 import Dashboard from './components/Dashboard';
+import Manifesto from './components/Manifesto';
 import Reports from './components/Reports';
 import Configuration from './components/Configuration';
 import { initializeStorage, getAuthState, getWasteRecords } from './utils/storage';
 import { WasteRecord } from './types';
 
-type ActiveTab = 'capture' | 'dashboard' | 'reports' | 'configuration';
+type ActiveTab = 'capture' | 'dashboard' | 'manifesto' | 'reports' | 'configuration';
 
 function App() {
   const [authState, setAuthState] = useState(getAuthState());
@@ -65,10 +66,16 @@ function App() {
       color: 'text-blue-600 bg-blue-100'
     },
     {
+      id: 'manifesto' as const,
+      name: 'Manifiestos',
+      icon: Clipboard,
+      color: 'text-purple-600 bg-purple-100'
+    },
+    {
       id: 'reports' as const,
       name: 'Reportes',
       icon: FileText,
-      color: 'text-purple-600 bg-purple-100'
+      color: 'text-indigo-600 bg-indigo-100'
     },
     {
       id: 'configuration' as const,
@@ -122,6 +129,9 @@ function App() {
         )}
         {activeTab === 'dashboard' && (
           <Dashboard records={records} />
+        )}
+        {activeTab === 'manifesto' && (
+          <Manifesto records={records} />
         )}
         {activeTab === 'reports' && (
           <Reports records={records} onRecordDeleted={handleRecordDeleted} />
